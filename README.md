@@ -26,4 +26,4 @@ Replace the file in `apps/` with the new HTML, keeping the same filename. Then b
 
 ## Note
 
-The "explain this simply" AI feature in the two quiz apps only works inside claude.ai. Off claude.ai it switches itself off, and everything else works as usual.
+The AI "explain" button in the two quiz apps only works inside claude.ai. On this site, tapping it shows a short "not available here" message. Everything else in the apps, including the written explanations, works as usual.
