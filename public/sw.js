@@ -1,8 +1,8 @@
 // Network first, cache fallback: you always get the latest version when online,
 // and the launcher plus all four apps still open offline once visited.
-const CACHE = 'jasynapson-v5';
+const CACHE = 'jasynapson-v6';
 const CORE = [
-  './', 'index.html', 'sync.js', 'manifest.webmanifest', 'icons/logo.svg', 'icons/icon-192.png',
+  './', 'index.html', 'sync.js', 'manifest.webmanifest', 'icons/logo.webp', 'icons/icon-192.png',
   'apps/med301-flashcards.html', 'apps/brain-behaviour-quiz.html',
   'apps/recall-deck.html', 'apps/mathea-revision-quiz.html',
   'apps/mobile/med301-flashcards.css', 'apps/mobile/brain-behaviour-quiz.css',
