@@ -19,7 +19,9 @@ The apps save progress in the browser (localStorage). `public/sync.js` mirrors t
 - Every change is uploaded within a second, every 15 seconds, and when the app is closed. Offline changes upload when you are back online.
 - **Manage progress** on the home screen resets one app everywhere. The resets inside the apps sync too.
 
-The cloud copy lives in a Cloudflare Durable Object (`ProgressStore`, SQLite, see `src/worker.js`). Cloudflare creates it on deploy, with no dashboard setup, and the data survives redeploys. There is one shared progress store for the site, and anyone with the link can see and change it.
+Progress is kept **per device**. Each device creates a random restore code on first launch, and devices that already had progress before codes existed get one on their next launch, with their progress uploaded under it. The code is folded away under **Manage progress → Restore code**: copy it to recover progress after a reinstall, or enter it on another device to move progress there. A code with no saved progress is refused, so a typo can't wipe anything.
+
+The cloud copy lives in Cloudflare Durable Objects (`ProgressStore`, SQLite, one per device code, see `src/worker.js`). Cloudflare creates them on deploy, with no dashboard setup, and the data survives redeploys. Codes are random (~80 bits), so they can't be guessed.
 
 ## Deploy (Cloudflare Workers Builds)
 

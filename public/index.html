@@ -86,7 +86,7 @@ h1{font-family:Unbounded,Inter,sans-serif;font-weight:800;font-size:clamp(2rem,9
 .linkbtn{background:none;border:0;padding:6px 4px;color:#c4b5fd;text-decoration:underline;font-size:.78rem}
 #sheet{position:fixed;inset:0;z-index:50;display:none;align-items:flex-end;justify-content:center;background:rgba(3,2,10,.6);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 #sheet.on{display:flex}
-.panel{width:100%;max-width:520px;background:#120f24;border:1px solid var(--line);border-radius:22px 22px 0 0;
+.panel{width:100%;max-width:520px;max-height:calc(100% - var(--safe-t) - 12px);overflow-y:auto;overscroll-behavior:contain;background:#120f24;border:1px solid var(--line);border-radius:22px 22px 0 0;
   padding:18px max(16px,var(--safe-r)) calc(var(--safe-b) + 18px) max(16px,var(--safe-l));box-shadow:0 -20px 60px rgba(0,0,0,.5)}
 @media (min-width:560px){#sheet{align-items:center}.panel{border-radius:22px}}
 .panel h2{font-family:Unbounded,Inter,sans-serif;font-size:1.05rem;margin:0 0 4px}
@@ -96,6 +96,15 @@ h1{font-family:Unbounded,Inter,sans-serif;font-weight:800;font-size:clamp(2rem,9
 .prow2 .nm{flex:1;min-width:0;font-size:.92rem}.prow2 .nm small{display:block;color:var(--muted);font-size:.75rem}
 .rbtn{flex:none;border:1px solid rgba(248,113,113,.5);background:transparent;color:#fca5a5;border-radius:10px;padding:7px 12px;font-size:.82rem}
 .rbtn.sure{background:#dc2626;border-color:#dc2626;color:#fff}
+.codebox{margin-top:12px;border-top:1px solid var(--line);padding-top:10px;font-size:.82rem;color:var(--muted)}
+.codebox summary{cursor:pointer;padding:4px 0;list-style:none}.codebox summary::-webkit-details-marker{display:none}
+.codebox summary::after{content:" \203A";display:inline-block;transition:transform .15s}.codebox[open] summary::after{transform:rotate(90deg)}
+.codebox p{font-size:.78rem;margin:8px 0}
+.coderow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.code{font:600 1rem/1 ui-monospace,Menlo,monospace;letter-spacing:.06em;color:var(--ink);background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:10px;padding:9px 10px;user-select:all;-webkit-user-select:all}
+.sbtn{border:1px solid var(--line);background:rgba(255,255,255,.06);border-radius:10px;padding:8px 12px;font-size:.8rem}
+.codein{flex:1;min-width:0;font:500 .95rem ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(--ink);background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:10px;padding:9px 10px}
+.codemsg{min-height:1.2em;margin-top:6px;font-size:.78rem}.codemsg.bad{color:#fca5a5}.codemsg.good{color:#6ee7b7}
 .close{margin-top:14px;width:100%;border:1px solid var(--line);background:rgba(255,255,255,.06);border-radius:12px;padding:11px;font-weight:600}
 </style>
 </head>
@@ -121,8 +130,16 @@ h1{font-family:Unbounded,Inter,sans-serif;font-weight:800;font-size:clamp(2rem,9
 <div id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
   <div class="panel">
     <h2 id="sheetTitle">Manage progress</h2>
-    <p>Progress is saved on this device and in the cloud, so it survives updates, refreshes and new links. Resetting wipes an app's progress everywhere.</p>
+    <p>Progress is saved on this device and backed up to the cloud, so it survives updates, refreshes and new links. Resetting wipes that app's progress here and in its cloud backup.</p>
     <div id="prows"></div>
+    <details class="codebox" id="codebox">
+      <summary>Restore code</summary>
+      <p>Progress is saved per device under this code. Keep a copy to get your progress back after reinstalling, or to move it to another device.</p>
+      <div class="coderow"><span class="code" id="mycode"></span><button class="sbtn" id="copycode">Copy</button></div>
+      <p>Have a code from another device? Its progress replaces what's on this device.</p>
+      <div class="coderow"><input class="codein" id="codein" placeholder="XXXX-XXXX-XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="24"><button class="sbtn" id="usecode">Use code</button></div>
+      <div class="codemsg" id="codemsg" role="status"></div>
+    </details>
     <button class="close" id="sheetClose">Done</button>
   </div>
 </div>
@@ -398,7 +415,25 @@ function drawRows(){
     row.appendChild(b);prows.appendChild(row);
   });
 }
-$('manage').onclick=function(){drawRows();sheet.classList.add('on');$('sheetClose').focus();};
+$('manage').onclick=function(){drawRows();$('mycode').textContent=Sync.code();$('codemsg').textContent='';$('codebox').open=false;sheet.classList.add('on');$('sheetClose').focus();};
+function codeMsg(t,cls){var m=$('codemsg');m.textContent=t;m.className='codemsg '+(cls||'');}
+$('copycode').onclick=function(){
+  var c=Sync.code();
+  (navigator.clipboard?navigator.clipboard.writeText(c):Promise.reject()).then(function(){codeMsg('Copied.','good')},
+    function(){var r=document.createRange();r.selectNodeContents($('mycode'));var sel=getSelection();sel.removeAllRanges();sel.addRange(r);codeMsg('Selected: copy it from the menu.');});
+};
+var confirmCode=null;
+$('usecode').onclick=function(){
+  var v=$('codein').value.trim();if(!v){codeMsg('Type the code first.','bad');return;}
+  if(confirmCode!==v){confirmCode=v;codeMsg('Tap \u201cUse code\u201d again to replace this device\u2019s progress.');return;}
+  confirmCode=null;codeMsg('Loading\u2026');$('usecode').disabled=true;
+  Sync.useCode(v).then(function(changed){
+    if(changed){Object.keys(frames).forEach(function(id){frames[id].remove();delete frames[id];});}
+    $('mycode').textContent=Sync.code();$('codein').value='';drawRows();
+    codeMsg(changed?'Done. This device now uses that progress.':'That is already this device\u2019s code.','good');
+  },function(e){codeMsg(e.message,'bad');}).then(function(){$('usecode').disabled=false;});
+};
+$('codein').addEventListener('input',function(){confirmCode=null;});
 $('sheetClose').onclick=function(){sheet.classList.remove('on')};
 sheet.addEventListener('click',function(e){if(e.target===sheet)sheet.classList.remove('on')});
 addEventListener('keydown',function(e){if(e.key==='Escape')sheet.classList.remove('on')});

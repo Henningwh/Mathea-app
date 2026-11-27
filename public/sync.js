@@ -10,6 +10,12 @@
  *   local != synced  -> changed on this device, not yet uploaded: local wins, upload it.
  *   local == synced  -> unchanged here: take whatever the server has now (including deletes).
  *   jasyn-resets  = app resets not yet confirmed by the server (works offline too).
+ *
+ * Progress is kept per device: each device makes a random restore code on first run
+ * (jasyn-device) and the server stores progress under that code. Entering the same
+ * code on another device (Manage progress -> Restore code) brings that progress over.
+ * Devices that already had progress before codes existed get a code on their next
+ * launch, and their local progress is uploaded under it.
  */
 (function () {
   'use strict';
@@ -19,7 +25,8 @@
     recall: 'cv1-recall-deck',
     revision: 'mathea-quiz-'
   };
-  var SYNCED = 'jasyn-synced', RESETS = 'jasyn-resets', LAST = 'jasyn-last-sync';
+  var SYNCED = 'jasyn-synced', RESETS = 'jasyn-resets', LAST = 'jasyn-last-sync', DEVICE = 'jasyn-device';
+  var CODE_CHARS = '0123456789ABCDEFGHJKMNPQRSTVWXYZ', CODE_RE = /^[0-9A-HJKMNP-TV-Z]{4}(-[0-9A-HJKMNP-TV-Z]{4}){3}$/;
   var API = 'api/progress';
   var pfx = Object.keys(PREFIXES).map(function (k) { return PREFIXES[k]; });
 
@@ -36,6 +43,23 @@
     try { for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (tracked(k)) m[k] = localStorage.getItem(k); } } catch (e) {}
     return m;
   }
+
+  function newCode() {
+    var b = new Uint8Array(16), out = '';
+    (window.crypto || window.msCrypto).getRandomValues(b);
+    for (var i = 0; i < 16; i++) { out += CODE_CHARS[b[i] & 31]; if (i % 4 === 3 && i < 15) out += '-'; }
+    return out;
+  }
+  // Accept codes typed loosely: lower case, spaces, missing dashes, O for 0, I/L for 1.
+  function normalizeCode(c) {
+    var raw = String(c || '').toUpperCase().replace(/O/g, '0').replace(/[IL]/g, '1').replace(/[^0-9A-Z]/g, '');
+    if (raw.length !== 16) return null;
+    var f = raw.match(/.{4}/g).join('-');
+    return CODE_RE.test(f) ? f : null;
+  }
+  var code = normalizeCode(ls.get(DEVICE));
+  if (!code) { code = newCode(); ls.set(DEVICE, code); }
+  function headers() { return { 'content-type': 'application/json', 'x-device-code': code }; }
 
   var state = { status: 'idle', last: Number(ls.get(LAST)) || 0, error: null };
   var listeners = [];
@@ -77,7 +101,7 @@
     var sent = buildPayload();
     emit('syncing');
     inflight = fetch(API, {
-      method: 'POST', cache: 'no-store', headers: { 'content-type': 'application/json' },
+      method: 'POST', cache: 'no-store', headers: headers(),
       body: JSON.stringify(sent)
     }).then(function (r) {
       if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -102,7 +126,7 @@
     if (isEmpty(p)) return;
     var body = JSON.stringify(p);
     try {
-      fetch(API, { method: 'POST', keepalive: body.length < 60000, headers: { 'content-type': 'application/json' }, body: body })
+      fetch(API, { method: 'POST', keepalive: body.length < 60000, headers: headers(), body: body })
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (s) { if (s) reconcile(p, s); }).catch(function () {});
     } catch (e) {}
@@ -142,6 +166,25 @@
       var pending = readJSON(RESETS, []); if (pending.indexOf(p) < 0) pending.push(p);
       ls.set(RESETS, JSON.stringify(pending));
       return sync();
+    },
+    code: function () { return code; },
+    // Switch this device to another device's code: its saved progress replaces what is here.
+    // Refuses codes with no saved progress, so a typo can't wipe anything.
+    useCode: function (input) {
+      var c = normalizeCode(input);
+      if (!c) return Promise.reject(new Error('That doesn\u2019t look like a restore code.'));
+      if (c === code) return Promise.resolve(false);
+      return fetch(API, { cache: 'no-store', headers: { 'x-device-code': c } })
+        .then(function (r) { if (!r.ok) throw new Error('Couldn\u2019t reach the cloud. Try again online.'); return r.json(); })
+        .then(function (srv) {
+          if (!Object.keys(srv.items || {}).length) throw new Error('No saved progress found for that code.');
+          return (inflight || Promise.resolve()).then(function () {
+            Object.keys(localMap()).forEach(function (k) { ls.del(k); });
+            ls.set(SYNCED, '{}'); ls.set(RESETS, '[]');
+            code = c; ls.set(DEVICE, c);
+            return sync();
+          }).then(function () { return true; });
+        });
     },
     countKeys: function (appId) {
       var p = PREFIXES[appId], n = 0, m = localMap();

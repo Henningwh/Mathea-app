@@ -1,5 +1,5 @@
 // jasynapson server: serves the static site from ./public and keeps study progress
-// in a Durable Object (SQLite). Cloudflare creates the database on deploy and it
+// in Durable Objects (SQLite), one per device code. Cloudflare creates the database on deploy and it
 // survives redeploys, so no external database or dashboard setup is needed.
 import { DurableObject } from 'cloudflare:workers';
 
@@ -13,6 +13,11 @@ export const APP_PREFIXES = {
 const PREFIXES = Object.values(APP_PREFIXES);
 const MAX_VALUE = 1_500_000; // characters per key (DO rows allow 2 MB)
 const MAX_BODY = 8_000_000;
+
+// Each device has its own random restore code (16 Crockford base32 chars, ~80 bits),
+// e.g. K7QF-29XM-WD4P-H3NB. Every code gets its own Durable Object, so progress is
+// kept separate per device and can't be guessed.
+export const CODE_RE = /^[0-9A-HJKMNP-TV-Z]{4}(-[0-9A-HJKMNP-TV-Z]{4}){3}$/;
 
 export const isTrackedKey = (k) =>
   typeof k === 'string' && k.length > 0 && k.length <= 200 && PREFIXES.some((p) => k.startsWith(p));
@@ -68,7 +73,9 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === '/api/progress') {
-      const store = env.PROGRESS.get(env.PROGRESS.idFromName('main'));
+      const code = (request.headers.get('x-device-code') || '').toUpperCase();
+      if (!CODE_RE.test(code)) return json({ error: 'missing or invalid device code' }, 400);
+      const store = env.PROGRESS.get(env.PROGRESS.idFromName('device:' + code));
       if (request.method === 'GET') return json(await store.snapshot());
       if (request.method === 'POST') {
         const text = await request.text();
