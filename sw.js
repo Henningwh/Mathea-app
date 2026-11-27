@@ -1,10 +1,12 @@
 // Network first, cache fallback: you always get the latest version when online,
 // and the launcher plus all four apps still open offline once visited.
-const CACHE = 'jasynapson-v1';
+const CACHE = 'jasynapson-v2';
 const CORE = [
   './', 'index.html', 'manifest.webmanifest', 'icons/logo.svg', 'icons/icon-192.png',
   'apps/med301-flashcards.html', 'apps/brain-behaviour-quiz.html',
-  'apps/recall-deck.html', 'apps/mathea-revision-quiz.html'
+  'apps/recall-deck.html', 'apps/mathea-revision-quiz.html',
+  'apps/mobile/med301-flashcards.css', 'apps/mobile/brain-behaviour-quiz.css',
+  'apps/mobile/recall-deck.css', 'apps/mobile/mathea-revision-quiz.css'
 ];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));

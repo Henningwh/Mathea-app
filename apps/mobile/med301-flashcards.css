@@ -1,0 +1,21 @@
+/* Phone layout for MED 301 Flashcards. Added by the jasynapson launcher; the app file itself is untouched. */
+@media (max-width:640px){
+  body{padding-block:12px 20px}
+  h1{font-size:1.5rem}
+  .sub{font-size:.8rem;margin-bottom:10px}
+  .bar{margin-bottom:10px}
+  .bar .btn{padding:5px 12px;font-size:.8rem}
+  /* deck list as a two-column grid of compact tiles */
+  .grid:has(.deck){grid-template-columns:1fr 1fr;gap:6px}
+  .deck{grid-template-columns:1fr;gap:3px;padding:8px 10px;border-radius:10px;align-content:space-between;height:100%}
+  .deck b{font-size:.8rem;line-height:1.25}
+  .deck span{font-size:.68rem}
+  .prog{height:4px}
+  /* study view */
+  .top h2{font-size:1.15rem}
+  .card{min-height:200px;padding:16px}
+  .q{font-size:1.05rem}
+  .a{font-size:1rem}
+  .e{font-size:.9rem}
+  .hint{margin:6px 0}
+}

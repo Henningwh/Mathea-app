@@ -62,8 +62,8 @@ h1{font-family:Unbounded,Inter,sans-serif;font-weight:800;font-size:clamp(2rem,9
 #stage.on{visibility:visible}
 #stage iframe{position:absolute;border:0;display:block;
   top:var(--safe-t);left:var(--safe-l);width:calc(100% - var(--safe-l) - var(--safe-r));height:calc(100% - var(--safe-t) - var(--safe-b));
-  background:var(--appbg,#fff);opacity:0;pointer-events:none}
-#stage iframe.on{opacity:1;pointer-events:auto}
+  background:var(--appbg,#fff);display:none}
+#stage iframe.on{display:block}
 
 #homebtn{position:fixed;z-index:30;width:46px;height:46px;border-radius:50%;border:0;display:none;place-items:center;
   background:rgba(12,10,28,.72);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
@@ -166,10 +166,18 @@ function frameFor(a){
   if(frames[a.id])return frames[a.id];
   var f=document.createElement('iframe');
   f.title=a.name; f.src=a.file; f.setAttribute('allow','clipboard-write');
-  f._ready=new Promise(function(res){f.addEventListener('load',function(){
-    // match the area around the iframe (safe-area padding) to the app's own background
-    try{var bg=getComputedStyle(f.contentDocument.body).backgroundColor;if(bg&&bg!=='rgba(0, 0, 0, 0)')f._bg=bg;}catch(e){}
-    res();},{once:true});});
+  // Phone layout tweaks live in apps/mobile/<app>.css so the app files stay untouched.
+  // They go at the end of <body> so they come after (and win over) the app's own styles.
+  var css=fetch('apps/mobile/'+a.file.split('/').pop().replace('.html','.css')).then(function(r){return r.ok?r.text():''}).catch(function(){return ''});
+  var loaded=new Promise(function(res){f.addEventListener('load',res,{once:true});});
+  f._ready=Promise.all([loaded,css]).then(function(v){
+    try{
+      var d=f.contentDocument;
+      if(v[1]){var st=d.createElement('style');st.id='jasyn-mobile';st.textContent=v[1];d.body.appendChild(st);}
+      // match the area around the iframe (safe-area padding) to the app's own background
+      var bg=getComputedStyle(d.body).backgroundColor;if(bg&&bg!=='rgba(0, 0, 0, 0)')f._bg=bg;
+    }catch(e){}
+  });
   stage.appendChild(f); frames[a.id]=f; return f;
 }
 
@@ -276,7 +284,7 @@ function openApp(a,origin,fromHistory){
   Promise.all([anim,f._ready]).then(function(){
     for(var k in frames)frames[k].classList.toggle('on',k===a.id);
     stage.style.setProperty('--appbg',f._bg||'#fff');
-    stage.classList.add('on'); $('home').style.visibility='hidden'; netRun=false;
+    stage.classList.add('on'); $('home').style.display='none'; netRun=false;
     homebtn.style.setProperty('--c',a.c); homebtn.classList.add('on'); placeHome();
     current=a.id; store.set('jasyn-last',a.id);
     if(!fromHistory)history.pushState({app:a.id},'','#'+a.id);
@@ -291,7 +299,7 @@ function goHome(fromHistory){
   (function step(now){var t=Math.min(1,(now-s)/220);fill.style.opacity=t;
     if(t<1){requestAnimationFrame(step);return;}
     stage.classList.remove('on'); for(var k in frames)frames[k].classList.remove('on');
-    homebtn.classList.remove('on'); $('home').style.visibility='visible';
+    homebtn.classList.remove('on'); $('home').style.display='';
     if(!netRun){netRun=true;requestAnimationFrame(drawNet);}
     current=null;
     if(!fromHistory&&history.state&&history.state.app)history.back();

@@ -1,0 +1,18 @@
+/* Phone layout for Recall Deck. Added by the jasynapson launcher; the app file itself is untouched. */
+@media (max-width:640px){
+  body{padding-block:12px 20px}
+  .wrap{gap:12px}
+  h1{font-size:1.9rem}
+  #home>p.muted{font-size:.86rem;line-height:1.4}
+  .stat{padding:8px 10px}
+  .stat b{font-size:1.5rem}
+  .legend{font-size:.74rem;gap:4px 10px}
+  .chips{gap:6px}
+  .chip{min-height:32px;padding:4px 11px;font-size:.8rem}
+  .btn{min-height:42px;padding:9px 16px}
+  .how{font-size:.76rem;gap:4px;line-height:1.4}
+  .card{min-height:200px;padding:16px;gap:10px}
+  .front{font-size:1.15rem}
+  .ans{font-size:.95rem}
+  .grade button{min-height:50px}
+}

@@ -9,7 +9,7 @@ A home-screen launcher for four study apps. Tap an app and a spark jumps between
 | Recall Deck | `apps/recall-deck.html` | red |
 | Mathea Revision Quiz | `apps/mathea-revision-quiz.html` | amber |
 
-The files in `apps/` are unmodified copies of the original artifacts. Each app keeps its own progress in the browser, under its own storage keys, so the apps don't overwrite each other.
+The files in `apps/` are unmodified copies of the original artifacts. Phone layout tweaks (compact start screens, Next/Finish pinned to the bottom) live separately in `apps/mobile/<app>.css`, and the launcher adds them when an app opens. Each app keeps its own progress in the browser, under its own storage keys, so the apps don't overwrite each other.
 
 ## Deploy on Cloudflare Pages
 
@@ -22,7 +22,7 @@ It's a static site: there's no build step and nothing to install. After the firs
 
 ## Updating an app
 
-Replace the file in `apps/` with the new HTML, keeping the same filename. Then bump `CACHE` in `sw.js` (for example to `jasynapson-v2`) so installed copies pick up the change.
+Replace the file in `apps/` with the new HTML, keeping the same filename. The phone stylesheet keeps applying, as long as the new version keeps the same layout. Then bump `CACHE` in `sw.js` (for example to `jasynapson-v2`) so installed copies pick up the change.
 
 ## Note
 
