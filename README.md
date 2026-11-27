@@ -4,26 +4,34 @@ A home-screen launcher for four study apps. Tap an app and a spark jumps between
 
 | App | File | Colour |
 |---|---|---|
-| MED 301 Flashcards | `apps/med301-flashcards.html` | violet |
-| Brain and Behaviour Quiz | `apps/brain-behaviour-quiz.html` | blue |
-| Recall Deck | `apps/recall-deck.html` | red |
-| Mathea Revision Quiz | `apps/mathea-revision-quiz.html` | amber |
+| MED 301 Flashcards | `public/apps/med301-flashcards.html` | violet |
+| Brain and Behaviour Quiz | `public/apps/brain-behaviour-quiz.html` | blue |
+| Recall Deck | `public/apps/recall-deck.html` | red |
+| Mathea Revision Quiz | `public/apps/mathea-revision-quiz.html` | amber |
 
-The files in `apps/` are unmodified copies of the original artifacts. Phone layout tweaks (compact start screens, Next/Finish pinned to the bottom) live separately in `apps/mobile/<app>.css`, and the launcher adds them when an app opens. Each app keeps its own progress in the browser, under its own storage keys, so the apps don't overwrite each other.
+The files in `public/apps/` are unmodified copies of the original artifacts. Phone layout tweaks live in `public/apps/mobile/<app>.css` and the launcher adds them when an app opens.
 
-## Deploy on Cloudflare Pages
+## Saved progress
 
-1. Cloudflare dashboard → Workers & Pages → Create → Pages → Connect to Git → pick this repo.
-2. Framework preset: **None**. Build command: *(leave empty)*. Build output directory: `/`.
-3. Deploy, then open the `*.pages.dev` URL on your phone.
-4. iPhone: Safari → Share → **Add to Home Screen**. Android: Chrome menu → **Install app**.
+The apps save progress in the browser (localStorage). `public/sync.js` mirrors that to the cloud, so progress survives new builds, refreshes, new links, other browsers and cleared site data:
 
-It's a static site: there's no build step and nothing to install. After the first visit it works offline (`sw.js`).
+- Before an app opens, the launcher loads the latest saved progress.
+- Every change is uploaded within a second, every 15 seconds, and when the app is closed. Offline changes upload when you are back online.
+- **Manage progress** on the home screen resets one app everywhere. The resets inside the apps sync too.
+
+The cloud copy lives in a Cloudflare Durable Object (`ProgressStore`, SQLite, see `src/worker.js`). Cloudflare creates it on deploy, with no dashboard setup, and the data survives redeploys. There is one shared progress store for the site, and anyone with the link can see and change it.
+
+## Deploy (Cloudflare Workers Builds)
+
+- Connected to this repo; production branch `main`. Build command: none. Deploy command: `npx wrangler deploy`.
+- `wrangler.jsonc` serves `./public` as static assets and sends `/api/*` to the worker.
+
+Local preview: `npm install`, then `npx wrangler dev`.
 
 ## Updating an app
 
-Replace the file in `apps/` with the new HTML, keeping the same filename. The phone stylesheet keeps applying, as long as the new version keeps the same layout. Then bump `CACHE` in `sw.js` (for example to `jasynapson-v2`) so installed copies pick up the change.
+Replace the file in `public/apps/` with the new HTML, keeping the same filename. Then bump `CACHE` in `public/sw.js` so installed copies pick up the change. Progress keeps working as long as the app keeps its storage key prefix (`bb-fc2-`, `bb-quiz3-`, `cv1-recall-deck`, `mathea-quiz-`).
 
 ## Note
 
-The AI "explain" button in the two quiz apps only works inside claude.ai. On this site, tapping it shows a short "not available here" message. Everything else in the apps, including the written explanations, works as usual.
+The AI "explain" button in the two quiz apps only works inside claude.ai. On this site, tapping it shows a short "not available here" message.

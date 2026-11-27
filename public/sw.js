@@ -1,8 +1,8 @@
 // Network first, cache fallback: you always get the latest version when online,
 // and the launcher plus all four apps still open offline once visited.
-const CACHE = 'jasynapson-v2';
+const CACHE = 'jasynapson-v3';
 const CORE = [
-  './', 'index.html', 'manifest.webmanifest', 'icons/logo.svg', 'icons/icon-192.png',
+  './', 'index.html', 'sync.js', 'manifest.webmanifest', 'icons/logo.svg', 'icons/icon-192.png',
   'apps/med301-flashcards.html', 'apps/brain-behaviour-quiz.html',
   'apps/recall-deck.html', 'apps/mathea-revision-quiz.html',
   'apps/mobile/med301-flashcards.css', 'apps/mobile/brain-behaviour-quiz.css',
@@ -22,6 +22,7 @@ self.addEventListener('fetch', e => {
   const sameOrigin = url.origin === self.location.origin;
   const fonts = url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com';
   if (!sameOrigin && !fonts) return;
+  if (sameOrigin && url.pathname.startsWith('/api/')) return; // progress API: always live
   e.respondWith(
     fetch(req).then(res => {
       if (res && (res.ok || res.type === 'opaque')) {

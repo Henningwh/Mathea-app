@@ -78,6 +78,25 @@ h1{font-family:Unbounded,Inter,sans-serif;font-weight:800;font-size:clamp(2rem,9
 #fx canvas{position:absolute;inset:0;width:100%;height:100%}
 #fx .label{position:absolute;left:0;right:0;bottom:calc(var(--safe-b) + 14%);text-align:center;font-family:Unbounded,Inter,sans-serif;font-weight:600;
   font-size:1.15rem;color:#fff;opacity:0;letter-spacing:.01em;text-shadow:0 2px 20px rgba(0,0,0,.35);padding:0 16px}
+/* ---------- sync status + manage progress ---------- */
+.syncrow{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 12px;color:var(--muted);font-size:.78rem}
+.syncdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#6b7280;margin-right:6px;vertical-align:1px}
+.syncdot.ok{background:#34d399;box-shadow:0 0 8px #34d399}.syncdot.busy{background:#9ff3ff;animation:pulse 1s infinite}.syncdot.warn{background:#fbbf24}
+@keyframes pulse{50%{opacity:.35}}
+.linkbtn{background:none;border:0;padding:6px 4px;color:#c4b5fd;text-decoration:underline;font-size:.78rem}
+#sheet{position:fixed;inset:0;z-index:50;display:none;align-items:flex-end;justify-content:center;background:rgba(3,2,10,.6);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+#sheet.on{display:flex}
+.panel{width:100%;max-width:520px;background:#120f24;border:1px solid var(--line);border-radius:22px 22px 0 0;
+  padding:18px max(16px,var(--safe-r)) calc(var(--safe-b) + 18px) max(16px,var(--safe-l));box-shadow:0 -20px 60px rgba(0,0,0,.5)}
+@media (min-width:560px){#sheet{align-items:center}.panel{border-radius:22px}}
+.panel h2{font-family:Unbounded,Inter,sans-serif;font-size:1.05rem;margin:0 0 4px}
+.panel p{color:var(--muted);font-size:.85rem;margin:0 0 14px}
+.prow2{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.prow2 .dot{flex:none;width:12px;height:12px;border-radius:4px;background:var(--c)}
+.prow2 .nm{flex:1;min-width:0;font-size:.92rem}.prow2 .nm small{display:block;color:var(--muted);font-size:.75rem}
+.rbtn{flex:none;border:1px solid rgba(248,113,113,.5);background:transparent;color:#fca5a5;border-radius:10px;padding:7px 12px;font-size:.82rem}
+.rbtn.sure{background:#dc2626;border-color:#dc2626;color:#fff}
+.close{margin-top:14px;width:100%;border:1px solid var(--line);background:rgba(255,255,255,.06);border-radius:12px;padding:11px;font-weight:600}
 </style>
 </head>
 <body>
@@ -89,7 +108,7 @@ h1{font-family:Unbounded,Inter,sans-serif;font-weight:800;font-size:clamp(2rem,9
     <h1>jasynapson</h1>
     <p class="tag">Pick a synapse. Fire.</p>
     <div class="grid" id="grid"></div>
-    <p class="foot">Your progress stays saved on this device.</p>
+    <div class="syncrow"><span id="syncmsg"><span class="syncdot"></span>Connecting…</span><button class="linkbtn" id="manage">Manage progress</button></div>
   </div>
 </section>
 
@@ -99,12 +118,22 @@ h1{font-family:Unbounded,Inter,sans-serif;font-weight:800;font-size:clamp(2rem,9
   <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11L12 4l8.5 7"/><path d="M6 9.5V20h4.5v-5.5h3V20H18V9.5"/></svg>
 </button>
 
+<div id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+  <div class="panel">
+    <h2 id="sheetTitle">Manage progress</h2>
+    <p>Progress is saved on this device and in the cloud, so it survives updates, refreshes and new links. Resetting wipes an app's progress everywhere.</p>
+    <div id="prows"></div>
+    <button class="close" id="sheetClose">Done</button>
+  </div>
+</div>
+
 <div id="fx" aria-hidden="true">
   <div class="fill"></div>
   <canvas id="fxc"></canvas>
   <div class="label" id="fxlabel"></div>
 </div>
 
+<script src="sync.js"></script>
 <script>
 (function(){
 'use strict';
@@ -165,11 +194,13 @@ var stage=$('stage'),frames={},current=null;
 function frameFor(a){
   if(frames[a.id])return frames[a.id];
   var f=document.createElement('iframe');
-  f.title=a.name; f.src=a.file; f.setAttribute('allow','clipboard-write');
+  f.title=a.name; f.setAttribute('allow','clipboard-write');
   // Phone layout tweaks live in apps/mobile/<app>.css so the app files stay untouched.
   // They go at the end of <body> so they come after (and win over) the app's own styles.
   var css=fetch('apps/mobile/'+a.file.split('/').pop().replace('.html','.css')).then(function(r){return r.ok?r.text():''}).catch(function(){return ''});
-  var loaded=new Promise(function(res){f.addEventListener('load',res,{once:true});});
+  // Wait for the first cloud sync so the app starts with the latest saved progress.
+  var loaded=window.JasynSync.ready.then(function(){return new Promise(function(res){
+    f.addEventListener('load',res,{once:true}); f.src=a.file;});});
   f._ready=Promise.all([loaded,css]).then(function(v){
     try{
       var d=f.contentDocument;
@@ -331,6 +362,46 @@ homebtn.addEventListener('pointerup',function(){if(!drag)return;
   if(drag.moved){pos={x:homebtn.offsetLeft,y:homebtn.offsetTop};store.set('jasyn-btn',JSON.stringify(pos));}else goHome();drag=null;});
 homebtn.addEventListener('pointercancel',function(){drag=null});
 homebtn.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();goHome();}});
+
+/* ---------- progress sync ---------- */
+var Sync=window.JasynSync;
+function dropFrame(id){var f=frames[id];if(f&&current!==id){f.remove();delete frames[id];}}
+// Another device changed an app's progress: reload that app next time it opens.
+Sync.onRemoteChange(function(ids){ids.forEach(dropFrame)});
+function ago(t){if(!t)return '';var s=Math.round((Date.now()-t)/1000);
+  return s<45?'just now':s<3600?Math.round(s/60)+' min ago':s<86400?Math.round(s/3600)+' h ago':new Date(t).toLocaleDateString();}
+function showSync(st){
+  var m=$('syncmsg'),dot,txt;
+  if(st.status==='syncing'){dot='busy';txt='Syncing progress…';}
+  else if(st.status==='synced'){dot='ok';txt='Progress saved to the cloud · '+ago(st.last);}
+  else if(st.status==='offline'){dot='warn';txt='Offline: saved on this device, will sync';}
+  else if(st.status==='error'){dot='warn';txt='Saved on this device, cloud sync will retry';}
+  else{dot='';txt='Connecting…';}
+  m.innerHTML='<span class="syncdot '+dot+'"></span>'+txt;
+}
+Sync.onStatus(showSync);
+setInterval(function(){showSync(Sync.state)},30000);
+
+var sheet=$('sheet'),prows=$('prows');
+function drawRows(){
+  prows.innerHTML='';
+  APPS.forEach(function(a){
+    var n=Sync.countKeys(a.id),row=document.createElement('div');row.className='prow2';row.style.setProperty('--c',a.c);
+    row.innerHTML='<span class="dot"></span><span class="nm">'+a.name+'<small>'+(n?'Has saved progress':'No progress yet')+'</small></span>';
+    var b=document.createElement('button');b.className='rbtn';b.textContent='Reset';b.disabled=!n;if(!n)b.style.opacity=.4;
+    var t=null;
+    b.onclick=function(){
+      if(!b.classList.contains('sure')){b.classList.add('sure');b.textContent='Tap to confirm';clearTimeout(t);
+        t=setTimeout(function(){b.classList.remove('sure');b.textContent='Reset'},3000);return;}
+      clearTimeout(t);dropFrame(a.id);Sync.reset(a.id).then(drawRows);drawRows();
+    };
+    row.appendChild(b);prows.appendChild(row);
+  });
+}
+$('manage').onclick=function(){drawRows();sheet.classList.add('on');$('sheetClose').focus();};
+$('sheetClose').onclick=function(){sheet.classList.remove('on')};
+sheet.addEventListener('click',function(e){if(e.target===sheet)sheet.classList.remove('on')});
+addEventListener('keydown',function(e){if(e.key==='Escape')sheet.classList.remove('on')});
 
 /* ---------- offline support once installed ---------- */
 if('serviceWorker' in navigator&&location.protocol==='https:'){addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})});}
