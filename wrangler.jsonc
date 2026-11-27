@@ -1,0 +1,6 @@
+{
+  // Static site: Cloudflare serves the files in this folder as-is. No build step.
+  "name": "jasynapson",
+  "compatibility_date": "2026-11-01",
+  "assets": { "directory": "." }
+}
