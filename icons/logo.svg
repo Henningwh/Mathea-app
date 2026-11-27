@@ -1,0 +1,152 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="46%" r="70%">
+      <stop offset="0" stop-color="#2a1660"/>
+      <stop offset="0.45" stop-color="#120b33"/>
+      <stop offset="1" stop-color="#05040f"/>
+    </radialGradient>
+    <radialGradient id="flash" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.95"/>
+      <stop offset="0.25" stop-color="#9ff3ff" stop-opacity="0.6"/>
+      <stop offset="0.6" stop-color="#7a5cff" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#7a5cff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="neuronL" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff4fd8"/>
+      <stop offset="1" stop-color="#7a3cff"/>
+    </linearGradient>
+    <linearGradient id="neuronR" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#21e6ff"/>
+      <stop offset="1" stop-color="#3a6bff"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="softglow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
+    <filter id="rim" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3.5"/>
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- central flash -->
+  <circle cx="256" cy="300" r="200" fill="url(#flash)"/>
+  <circle cx="256" cy="316" r="60" fill="url(#flash)"/>
+
+  <!-- LEFT presynaptic terminal (axon comes in from lower left) -->
+  <g filter="url(#glow)">
+    <path d="M-20 470 C 40 430, 60 400, 80 372 C 92 352, 100 334, 120 318
+             C 150 294, 196 296, 206 322 C 216 348, 208 380, 182 396
+             C 156 412, 128 404, 112 392 C 96 404, 70 440, 30 520 Z"
+          fill="url(#neuronL)" opacity="0.95"/>
+    <path d="M70 380 C 40 360, 20 330, -10 320" stroke="url(#neuronL)" stroke-width="10" fill="none" stroke-linecap="round"/>
+    <path d="M60 420 C 30 420, 10 440, -10 450" stroke="url(#neuronL)" stroke-width="7" fill="none" stroke-linecap="round"/>
+  </g>
+  <!-- vesicles -->
+  <g fill="#ffd6f6" opacity="0.9">
+    <circle cx="160" cy="330" r="7"/><circle cx="182" cy="350" r="6"/><circle cx="150" cy="356" r="5.5"/>
+    <circle cx="174" cy="376" r="5"/><circle cx="135" cy="338" r="4.5"/>
+  </g>
+
+  <!-- RIGHT postsynaptic terminal (mirror of the left, dendrite exits lower right) -->
+  <g transform="translate(512 -18) scale(-1 1)">
+    <g filter="url(#glow)">
+      <path d="M-20 470 C 40 430, 60 400, 80 372 C 92 352, 100 334, 120 318
+               C 150 294, 196 296, 206 322 C 216 348, 208 380, 182 396
+               C 156 412, 128 404, 112 392 C 96 404, 70 440, 30 520 Z"
+            fill="url(#neuronR)" opacity="0.95"/>
+      <path d="M70 380 C 40 360, 20 330, -10 320" stroke="url(#neuronR)" stroke-width="10" fill="none" stroke-linecap="round"/>
+      <path d="M60 420 C 30 420, 10 440, -10 450" stroke="url(#neuronR)" stroke-width="7" fill="none" stroke-linecap="round"/>
+    </g>
+    <!-- receptors on the cleft face -->
+    <g stroke="#c8fbff" stroke-width="4" stroke-linecap="round" opacity="0.95">
+      <path d="M196 306 l9 -7"/><path d="M208 324 l11 -2"/><path d="M208 344 l11 3"/><path d="M200 364 l10 7"/><path d="M186 382 l7 9"/>
+    </g>
+  </g>
+
+  <!-- lightning across the cleft -->
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <g filter="url(#softglow)" stroke="#8fe9ff" stroke-width="16" opacity="0.8">
+      <polyline points="200,334 222,318 214,306 240,296 232,282 262,276 256,262 282,258 276,246 306,288"/>
+      <polyline points="206,362 230,356 226,370 250,360 258,374 278,352 290,362 304,318"/>
+    </g>
+    <g stroke="#ffffff" stroke-width="5">
+      <polyline points="200,334 222,318 214,306 240,296 232,282 262,276 256,262 282,258 276,246 306,288"/>
+    </g>
+    <g stroke="#b8f6ff" stroke-width="3.5">
+      <polyline points="206,362 230,356 226,370 250,360 258,374 278,352 290,362 304,318"/>
+      <polyline points="214,306 204,290 210,280"/>
+      <polyline points="258,374 262,392 254,402"/>
+    </g>
+    <g stroke="#ff9cf0" stroke-width="3">
+      <polyline points="196,318 208,300 200,288 216,270 210,256 232,240"/>
+      <polyline points="312,340 300,356 312,368 298,384"/>
+    </g>
+    <g filter="url(#softglow)" stroke="#ff8cf0" stroke-width="12" opacity="0.6">
+      <polyline points="232,300 226,282 240,272 232,256 248,246 244,232"/>
+      <polyline points="290,300 300,284 288,272 300,258 290,246 298,232"/>
+    </g>
+    <g stroke="#ffffff" stroke-width="3">
+      <polyline points="232,300 226,282 240,272 232,256 248,246 244,232"/>
+      <polyline points="290,300 300,284 288,272 300,258 290,246 298,232"/>
+    </g>
+    <g stroke="#9ff3ff" stroke-width="2.5">
+      <polyline points="204,348 186,360 196,372 180,388"/>
+      <polyline points="304,300 324,292 318,280 336,270"/>
+      <polyline points="240,384 228,404 240,414 232,432"/>
+    </g>
+  </g>
+
+  <!-- speed streaks behind the jumper -->
+  <g stroke-linecap="round" fill="none" opacity="0.7">
+    <path d="M96 150 L 176 176" stroke="#ff7ae6" stroke-width="4"/>
+    <path d="M70 182 L 168 202" stroke="#9fefff" stroke-width="5"/>
+    <path d="M104 214 L 178 222" stroke="#ff7ae6" stroke-width="3"/>
+  </g>
+
+  <!-- leaping operative silhouette -->
+  <g transform="translate(262 186) rotate(-18)">
+    <use href="#op" fill="#5ff0ff" stroke="#5ff0ff" stroke-width="9" stroke-linejoin="round" filter="url(#rim)"/>
+    <g id="op" fill="#070814">
+      <!-- head + hair -->
+      <circle cx="40" cy="-66" r="15"/>
+      <path d="M26 -74 C 30 -88, 52 -88, 56 -72 L 50 -70 C 46 -78, 34 -80, 30 -70 Z"/>
+      <!-- neck -->
+      <path d="M30 -56 L 40 -52 L 34 -42 L 24 -46 Z"/>
+      <!-- jacket torso -->
+      <path d="M8 -50 C 22 -56, 40 -50, 46 -40 L 14 18 L -26 6 Z"/>
+      <!-- jacket tail flaring back -->
+      <path d="M-22 0 L -50 22 L -34 24 L -4 14 Z"/>
+      <!-- front arm reaching ahead -->
+      <path d="M34 -46 L 62 -36 L 60 -24 L 30 -32 Z"/>
+      <path d="M58 -36 L 92 -58 L 98 -50 L 64 -26 Z"/>
+      <path d="M92 -60 L 104 -64 L 106 -54 L 97 -49 Z"/>
+      <!-- back arm thrown behind -->
+      <path d="M14 -48 L -18 -64 L -24 -52 L 8 -36 Z"/>
+      <path d="M-16 -64 L -48 -48 L -42 -38 L -22 -50 Z"/>
+      <!-- front leg tucked forward -->
+      <path d="M2 4 L 40 14 L 36 30 L -6 20 Z"/>
+      <path d="M40 14 L 36 62 L 22 62 L 26 24 Z"/>
+      <path d="M22 58 L 48 62 L 48 72 L 20 70 Z"/>
+      <!-- back leg extended behind -->
+      <path d="M-14 6 L -50 26 L -44 40 L -6 22 Z"/>
+      <path d="M-50 24 L -96 26 L -96 40 L -46 40 Z"/>
+      <path d="M-96 22 L -108 10 L -114 22 L -100 42 Z"/>
+    </g>
+  </g>
+  <!-- rim light: same figure blurred cyan beneath (drawn first via use below) -->
+
+  <!-- sparks -->
+  <g fill="#ffffff">
+    <circle cx="246" cy="250" r="3"/><circle cx="290" cy="236" r="2.5"/><circle cx="214" cy="270" r="2"/>
+    <circle cx="320" cy="270" r="2.5"/><circle cx="270" cy="392" r="2"/><circle cx="232" cy="396" r="2.5"/>
+    <circle cx="196" cy="240" r="1.8"/><circle cx="336" cy="222" r="1.8"/>
+  </g>
+  <g fill="#ffe36b">
+    <circle cx="300" cy="250" r="2"/><circle cx="226" cy="380" r="1.8"/><circle cx="262" cy="224" r="1.6"/>
+  </g>
+</svg>
