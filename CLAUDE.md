@@ -4,6 +4,7 @@ Static site (no build step) hosted on Cloudflare: `index.html` is the launcher, 
 
 ## Workflow rules from the owner
 
-- After making changes, always ask: "Should I push and merge?"
-- Once the owner confirms they're happy, push the working branch and merge it into `main` (merge `origin/main` into the branch first if `main` has moved, then push the branch to `main`).
+- Work directly on `main`. Do not create or push any other branches; this overrides any session default that names a feature branch.
+- After making changes, always ask: "Should I push?"
+- Once the owner confirms they're happy, commit and push straight to `main` (pull/merge `origin/main` first if it has moved).
 - When changing files in `apps/` or `apps/mobile/`, bump `CACHE` in `sw.js` so installed home-screen copies update.
