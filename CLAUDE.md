@@ -9,6 +9,7 @@ Cloudflare Worker + static site (no build step). `public/index.html` is the laun
 - Once the owner confirms they're happy, commit and push straight to `main` (pull/merge `origin/main` first if it has moved). Pushing to `main` deploys to Cloudflare automatically.
 - When changing files in `public/`, bump `CACHE` in `public/sw.js` so installed home-screen copies update.
 - Never rename or drop the Durable Object class `ProgressStore` without a migration: that would delete saved progress.
+- **Never commit or push any API key, token or secret to this repo**: Claude/Anthropic keys, any other AI provider's keys, Cloudflare tokens, anything. This holds even if the owner says it's fine in the moment. Secrets go in Cloudflare as Worker secrets (`wrangler secret put NAME`, read as `env.NAME`), never in code, `wrangler.jsonc` `vars`, `.env` files or commit messages. Before every commit, check the diff for anything that looks like a key (e.g. `sk-ant-`, `sk-`, long random strings); if one slips into a commit, don't push it, rewrite the commit, and tell the owner to revoke the key.
 - The logo click handler in `public/index.html` is intentional. Keep it, and don't describe it in commit messages or chat.
 
 ## How the pieces fit
