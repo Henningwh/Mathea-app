@@ -30,6 +30,10 @@ The cloud copy lives in Cloudflare Durable Objects (`ProgressStore`, SQLite, one
 
 Local preview: `npm install`, then `npx wrangler dev`.
 
+## Adding an app
+
+See the step-by-step pattern in [`CLAUDE.md`](CLAUDE.md#adding-a-new-app-standard-pattern): copy the HTML in unchanged, register its storage prefix in `src/worker.js` and `public/sync.js`, add the tile, add the phone stylesheet, and test with `wrangler dev`.
+
 ## Updating an app
 
 Replace the file in `public/apps/` with the new HTML, keeping the same filename. Then bump `CACHE` in `public/sw.js` so installed copies pick up the change. Progress keeps working as long as the app keeps its storage key prefix (`bb-fc2-`, `bb-quiz3-`, `cv1-recall-deck`, `mathea-quiz-`).
