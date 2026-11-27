@@ -32,7 +32,7 @@ Local preview: `npm install`, then `npx wrangler dev`.
 
 ## Adding an app
 
-See the step-by-step pattern in [`CLAUDE.md`](CLAUDE.md#adding-a-new-app-standard-pattern): copy the HTML in unchanged, register its storage prefix in `src/worker.js` and `public/sync.js`, add the tile, add the phone stylesheet, and test with `wrangler dev`.
+See the step-by-step patterns (copying in an artifact, or building a new app here) in [`CLAUDE.md`](CLAUDE.md#adding-an-existing-artifact-as-an-app-standard-pattern): copy the HTML in unchanged, register its storage prefix in `src/worker.js` and `public/sync.js`, add the tile, add the phone stylesheet, and test with `wrangler dev`.
 
 ## Updating an app
 

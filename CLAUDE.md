@@ -25,7 +25,7 @@ Cloudflare Worker + static site (no build step). `public/index.html` is the laun
   - Device codes: `jasyn-device` (16 Crockford base32 chars, `XXXX-XXXX-XXXX-XXXX`) is sent as `x-device-code`. The worker uses `idFromName('device:' + code)`. Restoring a code that has no saved data is refused.
   - Launcher-only keys start with `jasyn-` and are never synced.
 
-## Adding a new app (standard pattern)
+## Adding an existing artifact as an app (standard pattern)
 
 1. **Get the HTML.** Read the artifact (Artifact tool, `action: "read"`) and copy the saved file unchanged to `public/apps/<slug>.html`. Check the copy byte-for-byte (`sha256sum`).
 2. **Find its storage.** `grep -n "localStorage\|sessionStorage\|indexedDB\|window.claude" public/apps/<slug>.html`, then list every key it reads and writes. Requirements for progress to persist:
@@ -45,5 +45,22 @@ Cloudflare Worker + static site (no build step). `public/index.html` is the laun
    - The app's own reset and "Manage progress → Reset" both clear the cloud copy, and leave other apps alone.
    - `npx wrangler deploy --dry-run` succeeds.
 8. Update the app table in `README.md`, then ask "Should I push?".
+
+## Building a new app here (not copied from an artifact)
+
+New apps may be written in this repo from scratch, possibly over several sessions before they're finished. Follow the same pattern so they plug into the launcher, sync and resets with no extra work:
+
+- **One self-contained file**: `public/apps/<slug>.html` with its CSS and JS inline. No build step, no frameworks that need bundling. CDN scripts only if really needed, with a pinned exact version. Google Fonts are fine.
+- **Storage contract** (this is what makes progress persist):
+  - Pick a new unique prefix, `<slug>-v1-`, and register it in `src/worker.js` and `public/sync.js` as in step 3 above.
+  - Use only `localStorage`, through try/catch wrappers. Read everything synchronously at startup, and write on every meaningful change (each answer or rating), not only at the end of a session.
+  - Store JSON values under a few keys (e.g. `<slug>-v1-progress`, `<slug>-v1-settings`) rather than thousands of tiny keys.
+  - Stay well under 1.5 MB per value.
+  - Never use sessionStorage, IndexedDB, cookies or `window.claude` for progress.
+- **Reset**: give the app its own "Reset progress" button (tap twice to confirm) that removes its keys with `localStorage.removeItem`, or sets them to an empty value, and re-renders. Sync picks that up automatically. Don't call the launcher from the app: apps must also work when opened on their own.
+- **Phone-first**: design for a 390×664 viewport from the start. Avoid long scrolling start screens, pin primary actions (Next/Finish) to the bottom, and respect `env(safe-area-inset-*)`. Then a separate `apps/mobile/` stylesheet isn't needed.
+- **Theme**: define colours as CSS variables on `:root`, with a dark-mode variant, and give `body` an explicit background (the launcher matches the area around the iframe to it).
+- **Work in progress**: while an app is unfinished, keep it out of the `APPS` array (it's still reachable at `/apps/<slug>.html` for testing), or add it with `sub: 'Work in progress'`. Ask the owner which. Don't change a prefix once real progress exists. If the data format changes, migrate on load inside the app, or move to `<slug>-v2-` while keeping the old prefix registered.
+- Then follow steps 4–8 above (tile, cache, test, README, ask to push).
 
 If an app needs a brand-new storage key prefix after it ships (e.g. the artifact author renamed keys), add the new prefix next to the old one rather than replacing it, so saved progress isn't orphaned.
